@@ -21,4 +21,4 @@ void cameraInit(void);
  * @brief Take the picture and store it in a string 
  * 
  */
-String takePicture(void);
+void takePicture(void);

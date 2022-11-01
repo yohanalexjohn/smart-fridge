@@ -75,14 +75,7 @@ void getPicture(void *pvParameters)
 {
     for (;;)
     {
-        String pictureToSend;
-        Serial.println("taking picture task");
-        Serial.println(uxTaskGetStackHighWaterMark(NULL));
-        Serial.println(pictureToSend);
-
-
-        pictureToSend = takePicture();
-
+        takePicture();
         vTaskDelay( 1000/ portTICK_PERIOD_MS );
     }
 }

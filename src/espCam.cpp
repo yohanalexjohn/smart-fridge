@@ -70,12 +70,12 @@ void cameraInit(void)
 
 }
 
-String takePicture(void)
+void takePicture(void)
 {
     camera_fb_t *picture = NULL;
     picture = NULL;
     picture = esp_camera_fb_get();
     String encryptPicture = base64::encode(picture->buf, picture->len);
+    esp_camera_fb_return(picture);
     Serial.println("taking Picture");
-    return encryptPicture;
 }
