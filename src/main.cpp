@@ -12,6 +12,7 @@
 #include "weightSensor.h"
 #include "halSwitch.h"
 #include "createTasks.h"
+#include "buzzer.h"
 
 void setup()
 {
@@ -27,4 +28,5 @@ void setup()
 
 void loop()
 {
+
 }

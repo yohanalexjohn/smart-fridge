@@ -15,12 +15,27 @@
 #include "weightSensor.h"
 #include "halSwitch.h"
 #include "createTasks.h"
+#include "buzzer.h"
 
 // Settings
 static const TickType_t dim_delay = 60000 / portTICK_PERIOD_MS;
 
-float objectWeight;
-bool switchState;
+// Globals
+static TimerHandle_t one_shot_timer = NULL;
+
+// PRIVATE MEMBERS
+
+QueueHandle_t msg_queue; // Send data from producer to consumer
+
+/**
+ * @brief store the sensor data
+ *
+ */
+struct sensorData
+{
+    float objectWeight;
+    bool switchState;
+};
 
 // PRIVATE FUNCTION DECLARTATIONS
 
@@ -38,7 +53,6 @@ static void getSensorData(void *pvParameters);
  */
 static void sendData(void *pvParameters);
 
-
 // Turn off LED when timer expires
 static void timeDoorCheck(TimerHandle_t xTimer);
 
@@ -46,32 +60,46 @@ static void timeDoorCheck(TimerHandle_t xTimer);
 
 void getSensorData(void *pvParameters)
 {
+    (void)pvParameters;
+
+    sensorData sendSensorValues;
+
     for (;;)
     {
         Serial.println("Get Sensor Data");
-        
-        switchState = getHalState();
 
-        if(switchState)
+        sendSensorValues.switchState = get_halState();
+
+        if (sendSensorValues.switchState)
         {
-            objectWeight = get_Weight();
+            sendSensorValues.objectWeight = get_Weight();
             // Start timer
             xTimerStart(one_shot_timer, portMAX_DELAY);
         }
+
+        // update the structure with this data
+        xQueueSend(msg_queue, &sendSensorValues, portMAX_DELAY);
     }
 }
 
 void sendData(void *pvParameters)
 {
+    (void)pvParameters;
+
+    sensorData getSensorValues;
+
     for (;;)
     {
         // Create the JSON document
         StaticJsonDocument<200> doc;
-        doc["weight"] = objectWeight;
-        doc["switch"] = switchState;
+        if (xQueueReceive(msg_queue, &getSensorValues, portMAX_DELAY) == pdPASS)
+        {
+            doc["weight"] = getSensorValues.objectWeight;
+            doc["switch"] = getSensorValues.switchState;
 
-        // Send the JSON document over the "link" serial port
-        serializeJson(doc, Serial1);
+            // Send the JSON document over the "link" serial port
+            serializeJson(doc, Serial1);
+        }
     }
 }
 
@@ -103,11 +131,15 @@ void taskCreate(void)
 
     // Create a one-shot timer
     one_shot_timer = xTimerCreate(
-                      "One-shot timer",     // Name of timer
-                      dim_delay,            // Period of timer (in ticks)
-                      pdFALSE,              // Auto-reload
-                      (void *)0,            // Timer ID
-                      autoDimmerCallback);  // Callback function
+        "One-shot timer", // Name of timer
+        dim_delay,        // Period of timer (in ticks)
+        pdFALSE,          // Auto-reload
+        (void *)0,        // Timer ID
+        timeDoorCheck);   // Callback function
+
+    // Setup the tasks
+    msg_queue = xQueueCreate(10,
+                               sizeof(sensorData));
 
     vTaskDelete(NULL);
 }

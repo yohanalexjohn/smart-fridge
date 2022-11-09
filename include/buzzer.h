@@ -9,5 +9,14 @@
  * 
  */
 
+/**
+ * @brief Initialise the Buzzer as an output
+ * 
+ */
 void buzzerInit(void);
+
+/**
+ * @brief Buzz at a set interval using PWM 
+ * 
+ */
 void buzzActive(void);

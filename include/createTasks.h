@@ -12,13 +12,6 @@
 #include "boardConfig.h"
 
 /**
- * @brief Declare the global variables 
- * 
- */
-extern float objectWeight;
-extern bool switchState;
-
-/**
  * @brief Create the tasks 
  * 
  */

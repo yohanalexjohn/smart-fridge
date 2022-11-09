@@ -12,7 +12,7 @@
 #include "boardConfig.h"
 
 /**
- * @brief Initalises the Hal sensor
+ * @brief Initialises the Hal sensor
  *
  */
 

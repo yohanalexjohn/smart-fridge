@@ -35,7 +35,7 @@ void weightSensorInit(void)
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
     // weightSensorCalilbration();
     delay(1000);
-    Serial.println("weight sensor callibrated");
+    Serial.println("weight sensor calibrated");
 }
 
 float get_Weight(void)
