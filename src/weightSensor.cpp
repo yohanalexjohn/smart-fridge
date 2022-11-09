@@ -42,8 +42,6 @@ float get_Weight(void)
 {
     float reading = scale.read();
     Serial.println(reading);
-    //digitalWrite(RED_LED, HIGH);
     delay(2000);
-    //digitalWrite(RED_LED, LOW);
     return reading;
 }

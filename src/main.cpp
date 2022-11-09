@@ -11,18 +11,17 @@
 #include "boardConfig.h"
 #include "weightSensor.h"
 #include "halSwitch.h"
-#include "espCam.h"
 #include "createTasks.h"
 
 void setup()
 {
 
   Serial.begin(115200);
-  // Serial1.begin(9600);
+  Serial1.begin(9600);
 
   weightSensorInit();
   halSensorInit();
-  cameraInit();
+  buzzActive();
   taskCreate();
 }
 

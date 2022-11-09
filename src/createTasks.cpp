@@ -15,11 +15,12 @@
 #include "weightSensor.h"
 #include "halSwitch.h"
 #include "createTasks.h"
-#include "espCam.h"
+
+// Settings
+static const TickType_t dim_delay = 60000 / portTICK_PERIOD_MS;
 
 float objectWeight;
 bool switchState;
-String pictureToSend;
 
 // PRIVATE FUNCTION DECLARTATIONS
 
@@ -28,71 +29,56 @@ String pictureToSend;
  *
  * @param pvParameters
  */
-static void getWeightData(void *pvParameters);
-
-/**
- * @brief Get the get halState object
- *
- * @param pvParameters
- */
-static void getHalState(void *pvParameters);
-
-/**
- * @brief Get the Picture object
- *
- * @param pvParameters
- */
-static void getPicture(void *pvParameters);
+static void getSensorData(void *pvParameters);
 
 /**
  * @brief Send the data to the Pi
  *
  * @param pvParameters
  */
-// static void sendData(void *pvParameters);
+static void sendData(void *pvParameters);
+
+
+// Turn off LED when timer expires
+static void timeDoorCheck(TimerHandle_t xTimer);
 
 // PRIVATE FUNCTION DEFINITIONS
 
-void getWeightData(void *pvParameters)
+void getSensorData(void *pvParameters)
 {
     for (;;)
     {
-        Serial.println("taking weight task");
-        objectWeight = get_Weight();
+        Serial.println("Get Sensor Data");
+        
+        switchState = getHalState();
+
+        if(switchState)
+        {
+            objectWeight = get_Weight();
+            // Start timer
+            xTimerStart(one_shot_timer, portMAX_DELAY);
+        }
     }
 }
 
-void getHalState(void *pvParameters)
+void sendData(void *pvParameters)
 {
     for (;;)
     {
-        Serial.println("taking switch task");
-        switchState = get_halState();
+        // Create the JSON document
+        StaticJsonDocument<200> doc;
+        doc["weight"] = objectWeight;
+        doc["switch"] = switchState;
+
+        // Send the JSON document over the "link" serial port
+        serializeJson(doc, Serial1);
     }
 }
 
-void getPicture(void *pvParameters)
+void timeDoorCheck(TimerHandle_t xTimer)
 {
-    for (;;)
-    {
-        takePicture();
-        vTaskDelay( 1000/ portTICK_PERIOD_MS );
-    }
+    buzzActive();
 }
-
-// void sendData(void *pvParameters)
-// {
-//     for (;;)
-//     {
-//         // Create the JSON document
-//         StaticJsonDocument<200> doc;
-//         doc["weight"] = objectWeight;
-//         doc["switch"] = switchState;
-
-//         // Send the JSON document over the "link" serial port
-//         serializeJson(doc, Serial1);
-//     }
-// }
 
 // PUBLIC FUNCTION DEFINITIONS
 
@@ -100,35 +86,28 @@ void getPicture(void *pvParameters)
 void taskCreate(void)
 {
     xTaskCreate(
-        getWeightData,
-        " Gather Weight ",
+        getSensorData,
+        " Gather Data ",
         1000,
         NULL,
         1,
         NULL);
 
     xTaskCreate(
-        getHalState,
-        " Get the HAL state ",
+        sendData,
+        " Send data to pi",
         1000,
         NULL,
-        1,
+        0,
         NULL);
 
-    xTaskCreate(
-        getPicture,
-        " Get the picture and convert it base64 ",
-        10000,
-        NULL,
-        1,
-        NULL);
+    // Create a one-shot timer
+    one_shot_timer = xTimerCreate(
+                      "One-shot timer",     // Name of timer
+                      dim_delay,            // Period of timer (in ticks)
+                      pdFALSE,              // Auto-reload
+                      (void *)0,            // Timer ID
+                      autoDimmerCallback);  // Callback function
 
-    // xTaskCreate(
-    //     sendData,
-    //     " Send data to pi",
-    //     1000,
-    //     NULL,
-    //     0,
-    //     NULL);
     vTaskDelete(NULL);
 }

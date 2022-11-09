@@ -14,8 +14,7 @@
 void halSensorInit(void)
 {
     pinMode(HAL_SWITCH, INPUT);
-    pinMode(YELLOW_LED,OUTPUT);
-    Serial.println("HAL Callibrated");
+    Serial.println("HAL Initialised");
     delay(100);
 }
 
@@ -24,9 +23,7 @@ bool get_halState(void)
     bool halState;
 
     halState = digitalRead(HAL_SWITCH);
-    digitalWrite(YELLOW_LED, HIGH);
     delay(1000);
-    digitalWrite(YELLOW_LED, LOW);
     Serial.println(halState);
     return halState;
 }
