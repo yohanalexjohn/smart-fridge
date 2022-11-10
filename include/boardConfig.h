@@ -22,4 +22,4 @@
 #define BUZZER               27
 
 // LED strip
-#define LED                  4
+#define LED                  35
