@@ -196,5 +196,8 @@ void taskCreate(void)
     msg_queue = xQueueCreate(QUEUE_LENGTH,
                              sizeof(sensorData));
 
+    // Suspend activateAlarm until it is resumed by the software timer 
+    vTaskSuspend(alarmTaskHandler);
+
     vTaskDelete(NULL);
 }
