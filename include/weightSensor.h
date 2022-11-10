@@ -12,14 +12,14 @@
 #include "boardConfig.h"
 
 /**
-*@brief Initialises the weight sensor 
-*@return void
+* @brief Initialises the weight sensor 
+*
 */
 void weightSensorInit( void );
 
 /**
  * @brief Get the Weight of the object
  * 
- * @return float 
+ * @return weight 
  */
 float get_Weight(void);

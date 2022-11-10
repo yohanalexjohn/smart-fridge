@@ -40,6 +40,7 @@ struct sensorData
 {
     float objectWeight;
     bool switchState;
+    bool alarmStatus;
 };
 
 // PRIVATE FUNCTION DECLARTATIONS
@@ -115,13 +116,14 @@ void sendData(void *pvParameters)
     for (;;)
     {
         // Create the JSON document
-        StaticJsonDocument<200> doc;
+        StaticJsonDocument<50> doc;
 
         // Checks if the Item was recieved from the queue to be packaged and sent to the Pi
         if (xQueueReceive(msg_queue, &getSensorValues, portMAX_DELAY) == pdPASS)
         {
             doc["weight"] = getSensorValues.objectWeight;
             doc["switch"] = getSensorValues.switchState;
+            doc["alarm"]  = getSensorValues.alarmStatus;
 
             // Send the JSON document over the "link" serial port
             serializeJson(doc, Serial1);
@@ -142,17 +144,24 @@ void activateAlarm(void *pvParameters)
 {
     sensorData checkDoorStatus;
 
+    // Set alarmStatus to false unless confirmed otherwise
+    checkDoorStatus.alarmStatus = false;
+
     // Check if the data for the structure is full and check if the door is open and buzz till door is
     if (xQueueReceive(msg_queue, &checkDoorStatus, portMAX_DELAY) == pdPASS)
     {
         // Keep buzzing at an intreval as long as the door is open
         while (checkDoorStatus.switchState)
         {
+            checkDoorStatus.alarmStatus = true;
             buzzActive();
+            xQueueSend(msg_queue, &checkDoorStatus, portMAX_DELAY);
         }
     }
 
-    // Suspend this task when the door is closed
+    xQueueSend(msg_queue, &checkDoorStatus, portMAX_DELAY);
+
+    // Suspend this task when the door is closed to be resumed only when the timer is called and expired again
     vTaskSuspend(NULL);
 }
 // PUBLIC FUNCTION DEFINITIONS
@@ -181,7 +190,7 @@ void taskCreate(void)
         "Activate the alarm",
         1000,
         NULL,
-        3,
+        2,
         &alarmTaskHandler);
 
     // Create a one-shot timer

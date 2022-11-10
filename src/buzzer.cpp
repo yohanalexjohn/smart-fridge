@@ -23,6 +23,6 @@ void buzzerInit(void)
 
 void buzzActive(void)
 {
-   // This will activate the buzzer at a 1000hz
+   // This will activate the buzzer at a 1000hz at a pulse rate of 1 sec
    tone(BUZZER, FREQUENCY, PULSE_TIME);
 }

@@ -12,34 +12,35 @@
 #include "weightSensor.h"
 #include "HX711.h"
 
-// STATIC FUNCTIONS DECLARATION
-/**
- * @brief Calibrate the weight sensor to return weight in grams
- *
- */
-// static void weightSensorCalilbration( void );
+#define CALWEIGHT 3.00
+#define DEFAULT_CALIFACTOR -7050
 
 HX711 scale;
-
-// STATIC FUNCTION DEFINITION
-
-// void weightSensorCallibration(void)
-// {
-//     TODO
-// }
 
 // PUBLIC FUNCTIONS DEFINITION
 
 void weightSensorInit(void)
 {
+    long currentOffset = 0;
+    float calibration_factor = DEFAULT_CALIFACTOR;
+    
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-    // weightSensorCalilbration();
+
+    scale.set_offset(currentOffset);
+    scale.set_scale(calibration_factor / 0.45352);
+
     delay(1000);
-    //Serial.println("weight sensor calibrated");
 }
 
 float get_Weight(void)
 {
-    float reading = scale.read();
-    return reading;
+    float data = abs(scale.get_units());
+
+    if (0.0000 - data > 0.0001)
+        data = 0.00; // reset to zero
+
+    data = data - 10;
+    data = abs(data);
+
+    return data;
 }
