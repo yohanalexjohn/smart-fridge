@@ -1,7 +1,7 @@
 /**
  * @file buzzer.cpp
  * @author Smart-Fridge
- * @brief Buzzer code with a timer 
+ * @brief Buzzer code with a timer
  * @version 0.1
  * @date 2022-10-28
  *
@@ -9,16 +9,20 @@
  *
  */
 
- #include "boardConfig.h"
- #include "buzzer.h"
+#include "boardConfig.h"
+#include "buzzer.h"
 
- void buzzerInit(void)
- {
-    pinMode(BUZZER,OUTPUT); 
-    delay(100);
- }
+#define PULSE_TIME 1000
+#define FREQUENCY 1000
 
- void buzzActive(void)
- {
-    tone(BUZZER,1000);
- }
+void buzzerInit(void)
+{
+   pinMode(BUZZER, OUTPUT);
+   delay(100);
+}
+
+void buzzActive(void)
+{
+   // This will activate the buzzer at a 1000hz
+   tone(BUZZER, FREQUENCY, PULSE_TIME);
+}

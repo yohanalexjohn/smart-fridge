@@ -25,7 +25,7 @@ HX711 scale;
 
 // void weightSensorCallibration(void)
 // {
-//     // TODO
+//     TODO
 // }
 
 // PUBLIC FUNCTIONS DEFINITION
@@ -35,13 +35,11 @@ void weightSensorInit(void)
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
     // weightSensorCalilbration();
     delay(1000);
-    Serial.println("weight sensor calibrated");
+    //Serial.println("weight sensor calibrated");
 }
 
 float get_Weight(void)
 {
     float reading = scale.read();
-    Serial.println(reading);
-    delay(2000);
     return reading;
 }
