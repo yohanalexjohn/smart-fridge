@@ -18,12 +18,12 @@ void setup()
 {
   // Begin all the serial comms between the sensors and the esp32 with the Pi
   Serial.begin(115200);
-  Serial1.begin(9600);
-  
+  Serial1.begin(9600);//, SERIAL_8N1, 18, 17);
+
   // Initialise all the sensors and tasks
   weightSensorInit();
   halSensorInit();
-  buzzActive();
+  buzzerInit();
   taskCreate();
 }
 

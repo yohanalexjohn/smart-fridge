@@ -21,8 +21,9 @@
 
 // PRIVATE MEMBERS
 
-// Time to wait for to check if door still is open
-static const TickType_t dim_delay = 60000 / portTICK_PERIOD_MS;
+// Time to wait for to check if door still is open 
+// Set time of delay to 60 seconds (Current timer is set to 6 seconds for testing) 
+static const TickType_t dim_delay = 6000 / portTICK_PERIOD_MS;
 
 // Name of the software timer handler
 static TimerHandle_t one_shot_timer = NULL;
@@ -30,7 +31,6 @@ static TimerHandle_t one_shot_timer = NULL;
 // Send data from producer to consumer
 QueueHandle_t msg_queue;
 
-TaskHandle_t alarmTaskHandler;
 
 /**
  * @brief store the sensor data
@@ -71,7 +71,7 @@ static void timeDoorCheck(TimerHandle_t xTimer);
  * @brief Activates the buzzer if the door is left open for more than 60 seconds
  *
  */
-static void activateAlarm(void *pvParameters);
+// static void activateAlarm(void *pvParameters);
 
 // PRIVATE FUNCTION DEFINITIONS
 void getSensorData(void *pvParameters)
@@ -80,23 +80,34 @@ void getSensorData(void *pvParameters)
 
     sensorData sendSensorValues;
 
+    sendSensorValues.alarmStatus = false;
+
     for (;;)
     {
-        Serial.println("Get Sensor Data");
 
         sendSensorValues.switchState = get_halState();
 
         // If the door is open get object weight and start timer
         if (sendSensorValues.switchState)
         {
+            // Serial.println(sendSensorValues.switchState);
+            // Serial.println(sendSensorValues.objectWeight);
+
             sendSensorValues.objectWeight = get_Weight();
 
             // Check if the timer has not already been started
             if (!xTimerIsTimerActive(one_shot_timer))
             {
                 // Start timer
+                Serial.println("Start Timer");
                 xTimerStart(one_shot_timer, portMAX_DELAY);
             }
+        }
+
+        else
+        {
+            // Reset alarm status so the buzzer is not activated 
+            sendSensorValues.alarmStatus = false;
         }
 
         // Send sensor values to the structure
@@ -123,10 +134,16 @@ void sendData(void *pvParameters)
         {
             doc["weight"] = getSensorValues.objectWeight;
             doc["switch"] = getSensorValues.switchState;
-            doc["alarm"]  = getSensorValues.alarmStatus;
+            doc["alarm"] = getSensorValues.alarmStatus;
+
+            if (getSensorValues.alarmStatus)
+            {
+                buzzActive();
+            }
 
             // Send the JSON document over the "link" serial port
-            serializeJson(doc, Serial1);
+            // This better work idk why it wont
+            serializeJson(doc, Serial2);
             Serial.println("JSON packet sent");
         }
 
@@ -137,33 +154,20 @@ void sendData(void *pvParameters)
 
 void timeDoorCheck(TimerHandle_t xTimer)
 {
-    vTaskResume(alarmTaskHandler);
-}
+    sensorData doorChangeState;
 
-void activateAlarm(void *pvParameters)
-{
-    sensorData checkDoorStatus;
-
-    // Set alarmStatus to false unless confirmed otherwise
-    checkDoorStatus.alarmStatus = false;
-
-    // Check if the data for the structure is full and check if the door is open and buzz till door is
-    if (xQueueReceive(msg_queue, &checkDoorStatus, portMAX_DELAY) == pdPASS)
+    // if door still open after the timer has expired change the Alarm Status to true
+    if (doorChangeState.switchState)
     {
-        // Keep buzzing at an intreval as long as the door is open
-        while (checkDoorStatus.switchState)
-        {
-            checkDoorStatus.alarmStatus = true;
-            buzzActive();
-            xQueueSend(msg_queue, &checkDoorStatus, portMAX_DELAY);
-        }
+        doorChangeState.alarmStatus = true;
     }
 
-    xQueueSend(msg_queue, &checkDoorStatus, portMAX_DELAY);
+    xQueueSend(msg_queue, &doorChangeState, portMAX_DELAY);
 
-    // Suspend this task when the door is closed to be resumed only when the timer is called and expired again
-    vTaskSuspend(NULL);
+    Serial.println("timer expired");
 }
+
+
 // PUBLIC FUNCTION DEFINITIONS
 
 // Create tasks
@@ -182,16 +186,8 @@ void taskCreate(void)
         " Send data to pi",
         1000,
         NULL,
-        2,
+        1,
         NULL);
-
-    xTaskCreate(
-        activateAlarm,
-        "Activate the alarm",
-        1000,
-        NULL,
-        2,
-        &alarmTaskHandler);
 
     // Create a one-shot timer
     one_shot_timer = xTimerCreate(
@@ -204,9 +200,6 @@ void taskCreate(void)
     // Setup the message queue
     msg_queue = xQueueCreate(QUEUE_LENGTH,
                              sizeof(sensorData));
-
-    // Suspend activateAlarm until it is resumed by the software timer 
-    vTaskSuspend(alarmTaskHandler);
 
     vTaskDelete(NULL);
 }
