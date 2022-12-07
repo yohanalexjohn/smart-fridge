@@ -22,5 +22,6 @@ bool get_halState(void)
     bool halState;
 
     halState = digitalRead(HAL_SWITCH);
+    //Serial.println(halState); // for Debugging purposes
     return halState;
 }

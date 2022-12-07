@@ -38,7 +38,7 @@ QueueHandle_t msg_queue;
  */
 struct sensorData
 {
-    float objectWeight;
+    int direction;
     bool switchState;
     bool alarmStatus;
 };
@@ -86,20 +86,19 @@ void getSensorData(void *pvParameters)
     {
 
         sendSensorValues.switchState = get_halState();
+        // Serial.println(sendSensorValues.switchState);
 
         // If the door is open get object weight and start timer
         if (sendSensorValues.switchState)
         {
-            // Serial.println(sendSensorValues.switchState);
-            // Serial.println(sendSensorValues.objectWeight);
-
-            sendSensorValues.objectWeight = get_Weight();
+            sendSensorValues.direction = get_direction();
+            // Serial.println(sendSensorValues.direction);
 
             // Check if the timer has not already been started
             if (!xTimerIsTimerActive(one_shot_timer))
             {
                 // Start timer
-                Serial.println("Start Timer");
+                //Serial.println("Start Timer");
                 xTimerStart(one_shot_timer, portMAX_DELAY);
             }
         }
@@ -114,7 +113,7 @@ void getSensorData(void *pvParameters)
         xQueueSend(msg_queue, &sendSensorValues, portMAX_DELAY);
 
         // Delay task for 100ms to give time
-        vTaskDelay(100);
+        vTaskDelay(10);
     }
 }
 
@@ -132,7 +131,7 @@ void sendData(void *pvParameters)
         // Checks if the Item was recieved from the queue to be packaged and sent to the Pi
         if (xQueueReceive(msg_queue, &getSensorValues, portMAX_DELAY) == pdPASS)
         {
-            doc["weight"] = getSensorValues.objectWeight;
+            doc["direction"] = getSensorValues.direction;
             doc["switch"] = getSensorValues.switchState;
             doc["alarm"] = getSensorValues.alarmStatus;
 
@@ -143,12 +142,14 @@ void sendData(void *pvParameters)
 
             // Send the JSON document over the "link" serial port
             // This better work idk why it wont
-            serializeJson(doc, Serial2);
-            Serial.println("JSON packet sent");
+            serializeJson(doc, Serial);
+            Serial.println();
+    
+            //Serial.println("JSON packet sent");
         }
 
         // Delay task for 1000 to give time for sensor readings to be updated
-        vTaskDelay(1000);
+        vTaskDelay(100);
     }
 }
 
@@ -164,7 +165,7 @@ void timeDoorCheck(TimerHandle_t xTimer)
 
     xQueueSend(msg_queue, &doorChangeState, portMAX_DELAY);
 
-    Serial.println("timer expired");
+    //Serial.println("timer expired");
 }
 
 

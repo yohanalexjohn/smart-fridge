@@ -18,8 +18,9 @@
 void weightSensorInit( void );
 
 /**
- * @brief Get the Weight of the object
+ * @brief Get the direction of the object
+ *        The system should run for about 5 seconds before readings become accurate
  * 
- * @return weight 
+ * @return int (message data)
  */
-float get_Weight(void);
+int get_direction(void);
