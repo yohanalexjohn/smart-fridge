@@ -16,7 +16,7 @@
 #define  LOADCELL_SCK_PIN    0
 
 // HAL effect switch Pin config 
-#define HAL_SWITCH           2
+#define HAL_SWITCH           18
 
 // Buzzer Pin config
 #define BUZZER               27

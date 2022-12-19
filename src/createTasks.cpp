@@ -40,7 +40,7 @@ struct sensorData
 {
     int direction;
     bool switchState;
-    bool alarmStatus;
+    bool alarmStatus = false;
 };
 
 // PRIVATE FUNCTION DECLARTATIONS
@@ -86,7 +86,7 @@ void getSensorData(void *pvParameters)
     {
 
         sendSensorValues.switchState = get_halState();
-        // Serial.println(sendSensorValues.switchState);
+        //Serial.println(sendSensorValues.switchState);
 
         // If the door is open get object weight and start timer
         if (sendSensorValues.switchState)
@@ -122,7 +122,12 @@ void sendData(void *pvParameters)
     (void)pvParameters;
 
     sensorData getSensorValues;
+    static int oldDirection = 0;
+    static bool oldSwitchState = true;
 
+    int direction;
+    bool switchState;
+    
     for (;;)
     {
         // Create the JSON document
@@ -131,8 +136,21 @@ void sendData(void *pvParameters)
         // Checks if the Item was recieved from the queue to be packaged and sent to the Pi
         if (xQueueReceive(msg_queue, &getSensorValues, portMAX_DELAY) == pdPASS)
         {
-            doc["direction"] = getSensorValues.direction;
-            doc["switch"] = getSensorValues.switchState;
+
+            direction = getSensorValues.direction;
+            switchState = getSensorValues.switchState;
+            
+            if (getSensorValues.alarmStatus == true)
+            {
+                direction = oldDirection;
+                switchState = oldSwitchState;
+            }
+
+            oldDirection = direction;
+            oldSwitchState = switchState;
+            
+            doc["direction"] = direction;
+            doc["switch"] = switchState;
             doc["alarm"] = getSensorValues.alarmStatus;
 
             if (getSensorValues.alarmStatus)
@@ -157,11 +175,7 @@ void timeDoorCheck(TimerHandle_t xTimer)
 {
     sensorData doorChangeState;
 
-    // if door still open after the timer has expired change the Alarm Status to true
-    if (doorChangeState.switchState)
-    {
-        doorChangeState.alarmStatus = true;
-    }
+    doorChangeState.alarmStatus = true;
 
     xQueueSend(msg_queue, &doorChangeState, portMAX_DELAY);
 
