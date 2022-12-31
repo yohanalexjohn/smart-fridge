@@ -7,7 +7,7 @@
 #define LED_COUNT       12     
 #define LED_PIN         25        
 #define LED_TYPE        WS2811
-#define COLORDER		    NEO_GRB
+#define COLORDER        NEO_GRB
 #define LED_FREQUENCY   NEO_KHZ800
 #define LED_BRIGHTNESS  50
 
