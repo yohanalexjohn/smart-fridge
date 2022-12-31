@@ -1,16 +1,11 @@
 #include "led.h"
 
-
-
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, COLORDER + LED_FREQUENCY);
 
 void ledsetup() {
   strip.begin(); // Initialize the strip
-  strip.setBrightness(40); // 255 = full brightness, 127 = 50%
+  strip.setBrightness(LED_BRIGHTNESS); // 255 = full brightness, 127 = 50%
 }
-
-    
-//  strip.setPixelColour(i, r,g,b)
 
 void ledcheck(bool dooropen, bool alarm, int direction) {
 
@@ -31,12 +26,10 @@ void ledcheck(bool dooropen, bool alarm, int direction) {
       else if (direction == 0 && alarm == true){
               strip.fill(strip.Color(255,0,0));
       }      
-  }
-      
+  }    
 	else { 
         strip.fill(strip.Color(0, 0, 0)); // black
     }
-    
+  
     strip.show();
-
 }
