@@ -25,6 +25,7 @@ void setup()
   halSensorInit();
   buzzerInit();
   taskCreate();
+  ledsetup();
 }
 
 void loop()
