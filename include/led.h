@@ -5,7 +5,7 @@
 #include <Adafruit_NeoPixel.h> 
 
 #define LED_COUNT       12     
-#define LED_PIN         25        
+#define LED_PIN         35        
 #define LED_TYPE        WS2811
 #define COLORDER        NEO_GRB
 #define LED_FREQUENCY   NEO_KHZ800
